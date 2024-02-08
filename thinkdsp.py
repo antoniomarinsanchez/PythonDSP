@@ -33,6 +33,53 @@ class Wave:
             # posibly asarray()
             self.ts = np.asanyarray(ts)
 
+    def __len__(self):
+        return len(self.ys)
+
+    @property
+    def start(self):
+        return self.ts[0]
+
+    @property
+    def end(self):
+        return self.ts[-1]
+
+    def find_index(self, t):
+        """Find the index corresponding to a given time."""
+        n = len(self)
+        start = self.start
+        end = self.end
+        i = round((n - 1) * (t - start) / (end - start))
+        return int(i)
+
+    def slice(self, i, j):
+        """Makes a slice for a Wave
+
+        i: first slice index
+        j: second slice index
+        """
+
+        ys = self.ys[i:j].copy()
+        ts = self.ts[i:j].copy()
+        return Wave(ys, ts, self.framerate)
+
+    def segment(self, start=None, duration=None):
+        """Extracts a segment.
+
+        start: float start time in seconds
+        duration: float duration in seconds
+
+        returns: Wave
+        """
+        if start is None:
+            start = self.ts[0]
+            i = 0
+        else:
+            i = self.find_index(start)
+
+        j = None if duration is None else self.find_index(start + duration)
+        return self.slice(i, j)
+
     def get_xfactor(self, options):
         """Extracts xfactor for plotting purposes"""
         try:
