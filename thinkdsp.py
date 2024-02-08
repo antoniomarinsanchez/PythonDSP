@@ -23,15 +23,15 @@ class Wave:
         ts: array of times
         framerate: samples per second
         """
-        # posibly asanyarray()
-        self.ys = np.asarray(ys)
+        # posibly asarray()
+        self.ys = np.asanyarray(ys)
         self.framerate = framerate if framerate is not None else 11025
 
         if ts is None:
             self.ts = np.arange(len(ys)) / self.framerate
         else:
-            # posibly asanyarray()
-            self.ts = np.asarray(ts)
+            # posibly asarray()
+            self.ts = np.asanyarray(ts)
 
     def get_xfactor(self, options):
         """Extracts xfactor for plotting purposes"""
@@ -54,6 +54,20 @@ class Wave:
 
 class Signal:
     """Represent a time-varying signal"""
+
+    def __add__(self, other):
+        """Adds two signals.
+
+        other: Signal
+
+        return: Signal
+        """
+        if other == 0:
+            return self
+        return SumSignal(self, other)
+
+    # commutative property
+    __radd__ = __add__
 
     @property
     def period(self):
@@ -91,6 +105,40 @@ class Signal:
         ts = start + np.arange(n) / framerate
         ys = self.evaluate(ts)
         return Wave(ys, ts, framerate=framerate)
+
+
+class SumSignal(Signal):
+    """Represents the sum of signals."""
+
+    def __init__(self, *args):
+        """Initializes the sum.
+
+        args: tuple of signals
+        """
+        self.signals = args
+
+    @property
+    def period(self):
+        """Period of the signal in seconds.
+
+        Note: this is not correct; it's mostly a placekeeper.
+
+        But it is correct for a harmonic sequence where all
+        component frequencies are multiples of the fundamental.
+
+        returns: float seconds
+        """
+        return max(sig.period for sig in self.signals)
+
+    def evaluate(self, ts):
+        """Evaluates the signal at the given times.
+
+        ts: float array of times
+
+        returns: float wave array
+        """
+        ts = np.asarray(ts)
+        return sum(sig.evaluate(ts) for sig in self.signals)
 
 
 class Sinusoid(Signal):
@@ -139,3 +187,14 @@ def cos_signal(freq=440, amp=10, offset=0):
 
     returns: Sinusoid object"""
     return Sinusoid(freq, amp, offset, func=np.cos)
+
+
+def sin_signal(freq=440, amp=10, offset=0):
+    """Makes a cosine sinusoid.
+
+    freq: float frequency in Hz
+    amp: float amplitude, 1.0 in nominal max
+    offset: float phase offset in radians
+
+    returns: Sinusoid object"""
+    return Sinusoid(freq, amp, offset, func=np.sin)

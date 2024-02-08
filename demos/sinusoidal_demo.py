@@ -1,4 +1,4 @@
-"""File to test DSP modules"""
+"""Demo for plot sinusoidal functions: sin, cos and sum of both"""
 
 import thinkdsp
 import matplotlib.pyplot as plt
